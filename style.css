@@ -1,0 +1,26 @@
+:root {
+    --analyser-fft-size: 2048px;
+}
+
+.container {
+    display: grid;
+}
+
+.item {
+    /*  */
+    height: 256px;
+}
+
+canvas {
+    border: 1px solid black;
+}
+
+#fft {
+    width: calc(var(--analyser-fft-size)/2);
+    transform: scale(0.5, 0.5) translate(-50%, -50%);
+}
+
+#waveform {
+    width: var(--analyser-fft-size);
+    transform: scale(0.25, 0.25) translate(-150%, -150%);
+}

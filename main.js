@@ -1,7 +1,5 @@
-var audioContext;
-var audioSourceNode;
-var sourceAnalyserNode;
-var outputAnalyserNode;
+import "./audio_graph.js";
+import { drawFFT, drawWaveform } from "./drawing.js";
 
 const fft_samples = 2048;
 const frequency_bins = new Array(fft_samples/2);
@@ -25,6 +23,8 @@ window.onload = function() {
 
 // Gets the microphone
 function getLocalStream() {
+    document.body.removeEventListener('click', getLocalStream);
+
     navigator.mediaDevices.getUserMedia({video: false, audio: true}).then( stream => {
         audioContext.resume().then(() => {
             console.log('Playback resumed successfully');
@@ -32,30 +32,34 @@ function getLocalStream() {
         // Create audio source node from MediaStream from microphone
         audioSourceNode = audioContext.createMediaStreamSource(stream);
 
-        sourceAnalyserNode = audioContext.createAnalyser();
-        sourceAnalyserNode.fftSize = fft_samples;
+        sourceAnalyserNode = new AnalyserNode(audioContext, {
+            fftSize: fft_samples,
+        });
+        console.log(sourceAnalyserNode.minDecibels);
+        console.log(sourceAnalyserNode.maxDecibels);
         // Connect the audio source to the source analyer for analysis
         audioSourceNode.connect(sourceAnalyserNode);
         
-        var biquadFilter = audioContext.createBiquadFilter();
+        var biquadFilter = new BiquadFilterNode(audioContext);
         // Connect up a biquadFilter
-        audioSourceNode.connect(biquadFilter);
+        sourceAnalyserNode.connect(biquadFilter);
 
-        outputAnalyserNode = audioContext.createAnalyser();
-        outputAnalyserNode.fftSize = fft_samples;
+        outputAnalyserNode = new AnalyserNode(audioContext, {
+            fftSize: fft_samples,
+        });
         // Connect the output to the output analyer for analysis
         biquadFilter.connect(outputAnalyserNode);
 
         // Connect the output to the destination for playback
-        biquadFilter.connect(audioContext.destination);
+        outputAnalyserNode.connect(audioContext.destination);
 
-        window.requestAnimationFrame(analyse);
+        window.requestAnimationFrame(draw);
     }).catch( err => {
         console.log("You got an error:" + err);
     });
 }
 
-function analyse() {
+function draw() {
     for (var analyserNode_index=0; analyserNode_index<2; analyserNode_index++){
         var analyserNode;
         var strokeStyle;
@@ -70,51 +74,15 @@ function analyse() {
                 break;
         }
         
-        const fft = new Float32Array(analyserNode.frequencyBinCount);
-        analyserNode.getFloatFrequencyData(fft);
-        const waveform = new Float32Array(analyserNode.fftSize)
-        analyserNode.getFloatTimeDomainData(waveform);
-        // console.log(fft);
-        // console.log(waveform);
-        var ctx = fft_canvas.getContext('2d');
         if (analyserNode_index == 0) {
-            ctx.clearRect(0, 0, 300, 300);
+            drawFFT(analyserNode, fft_canvas, true, {'strokeStyle': strokeStyle});
+            drawWaveform(analyserNode, waveform_canvas, true, {'strokeStyle': strokeStyle});
+        } else {
+            drawFFT(analyserNode, fft_canvas, false, {'strokeStyle': strokeStyle});
+            drawWaveform(analyserNode, waveform_canvas, false, {'strokeStyle': strokeStyle});
         }
-        ctx.beginPath();
-        ctx.strokeStyle = strokeStyle;
-        for (var i=0; i < fft.length; i+=10) {
-            const x = Math.trunc(i/10);
-            const y = Math.trunc(fft[i]+300/2);
-            // console.log(x, y);
-            if (i == 0) {
-                ctx.moveTo(0, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        }
-        ctx.stroke();
-
-        ctx = waveform_canvas.getContext('2d');
-        if (analyserNode_index == 0) {
-            ctx.clearRect(0, 0, 300, 300);
-        }
-        ctx.beginPath();
-        ctx.strokeStyle = strokeStyle;
-        for (var i=0; i < waveform.length; i+=10) {
-            const x = Math.trunc(i/10);
-            const y = Math.trunc(waveform[i]*300+75);
-            // console.log(x, y);
-            if (i==0) {
-                ctx.moveTo(0, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        }
-        ctx.stroke();
-
     }
-
-    window.requestAnimationFrame(analyse);
+    window.requestAnimationFrame(draw);
 }
 
-window.addEventListener('focus', getLocalStream);
+document.body.addEventListener('click', getLocalStream);
