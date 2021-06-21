@@ -1,36 +1,30 @@
+import { AudioManager } from "./audio-manager.js";
 import {
     drawFFT,
     drawWaveform
 } from "./drawing.js";
 
-var audioContext;
-var audioSourceNode;
-var sourceAnalyserNode;
-var outputAnalyserNode;
+let audioManager;
 
 const fft_samples = 2048;
-const frequency_bins = new Array(fft_samples / 2);
-for (var i = 0; i < frequency_bins.length; i++) {
-    frequency_bins[i] = (48000 / 2) / (frequency_bins.length) * i;
-}
+// const frequency_bins = new Array(fft_samples / 2);
+// for (var i = 0; i < frequency_bins.length; i++) {
+//     frequency_bins[i] = (48000 / 2) / (frequency_bins.length) * i;
+// }
 // console.log(frequency_bins);
 
 const fft_canvas = document.getElementById("fft");
 const waveform_canvas = document.getElementById("waveform");
 
-window.onload = function () {
-    console.log("window.onload");
+function init() {
+    document.body.removeEventListener('click', init);
+
     // for legacy browsers
     const AudioContext = window.AudioContext || window.webkitAudioContext;
 
-    audioContext = new AudioContext();
-    // console.log(audioContext.sampleRate);
-}
+    const audioContext = new AudioContext();
 
-// Gets the microphone
-function getLocalStream() {
-    document.body.removeEventListener('click', getLocalStream);
-
+    // Get the microphone
     navigator.mediaDevices.getUserMedia({
         video: false,
         audio: true
@@ -39,28 +33,19 @@ function getLocalStream() {
             console.log('Playback resumed successfully');
         });
         // Create audio source node from MediaStream from microphone
-        audioSourceNode = audioContext.createMediaStreamSource(stream);
+        const audioSourceNode = audioContext.createMediaStreamSource(stream);
 
-        sourceAnalyserNode = new AnalyserNode(audioContext, {
+        const sourceAnalyserNode = new AnalyserNode(audioContext, {
             fftSize: fft_samples,
         });
-        console.log(sourceAnalyserNode.minDecibels);
-        console.log(sourceAnalyserNode.maxDecibels);
-        // Connect the audio source to the source analyer for analysis
-        audioSourceNode.connect(sourceAnalyserNode);
 
-        var biquadFilter = new BiquadFilterNode(audioContext);
-        // Connect up a biquadFilter
-        sourceAnalyserNode.connect(biquadFilter);
+        const biquadFilter = new BiquadFilterNode(audioContext);
 
-        outputAnalyserNode = new AnalyserNode(audioContext, {
+        const outputAnalyserNode = new AnalyserNode(audioContext, {
             fftSize: fft_samples,
         });
-        // Connect the output to the output analyer for analysis
-        biquadFilter.connect(outputAnalyserNode);
 
-        // Connect the output to the destination for playback
-        outputAnalyserNode.connect(audioContext.destination);
+        audioManager = new AudioManager(audioContext, audioSourceNode, sourceAnalyserNode, [biquadFilter], outputAnalyserNode);
 
         window.requestAnimationFrame(draw);
     }).catch(err => {
@@ -74,11 +59,11 @@ function draw() {
         var strokeStyle;
         switch (analyserNode_index) {
             case 0:
-                analyserNode = sourceAnalyserNode;
+                analyserNode = audioManager.sourceAnalyserNode;
                 strokeStyle = 'rgb(0, 0, 0)';
                 break;
             case 1:
-                analyserNode = outputAnalyserNode;
+                analyserNode = audioManager.outputAnalyserNode;
                 strokeStyle = 'rgb(0, 255, 0)';
                 break;
         }
@@ -102,4 +87,4 @@ function draw() {
     window.requestAnimationFrame(draw);
 }
 
-document.body.addEventListener('click', getLocalStream);
+document.body.addEventListener('click', init);
