@@ -1,4 +1,6 @@
-import { AudioManager } from "./audio-manager.js";
+import {
+    AudioManager
+} from "./audio-manager.js";
 import {
     drawFFT,
     drawWaveform
@@ -39,13 +41,27 @@ function init() {
             fftSize: fft_samples,
         });
 
-        const biquadFilter = new BiquadFilterNode(audioContext);
+        const biquadFilter0 = new BiquadFilterNode(audioContext);
+        const waveShaperNode = new WaveShaperNode(audioContext);
 
         const outputAnalyserNode = new AnalyserNode(audioContext, {
             fftSize: fft_samples,
         });
 
-        audioManager = new AudioManager(audioContext, audioSourceNode, sourceAnalyserNode, [biquadFilter], outputAnalyserNode);
+        audioManager = new AudioManager(
+            audioContext,
+            audioSourceNode, 
+            sourceAnalyserNode,
+            [
+                biquadFilter0, 
+                waveShaperNode                
+            ], 
+            outputAnalyserNode);
+        audioManager.list();
+
+        const dynamicsCompressorNode = new DynamicsCompressorNode(audioContext);
+        audioManager.addNode(dynamicsCompressorNode);
+        audioManager.list();
 
         window.requestAnimationFrame(draw);
     }).catch(err => {
