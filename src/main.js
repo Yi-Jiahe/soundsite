@@ -5,6 +5,9 @@ import {
     drawFFT,
     drawWaveform
 } from "./drawing.js";
+import {
+    AudioGraph
+} from "./audio_graph.js"
 
 let audioManager;
 
@@ -62,6 +65,15 @@ function init() {
         const dynamicsCompressorNode = new DynamicsCompressorNode(audioContext);
         audioManager.addNode(dynamicsCompressorNode);
         audioManager.list();
+        
+        const domContainer = document.querySelector('#audio_graph');
+        ReactDOM.render(React.createElement(AudioGraph, 
+            {nodes: audioManager.intermediateNodes.map((n, i) => {
+                const node = {};
+                node['key'] = i;
+                node['name'] = n.constructor.name;
+                return node;
+            })}), domContainer);
 
         window.requestAnimationFrame(draw);
     }).catch(err => {
@@ -100,6 +112,7 @@ function draw() {
             });
         }
     }
+
     window.requestAnimationFrame(draw);
 }
 

@@ -24,3 +24,12 @@ canvas {
     width: var(--analyser-fft-size);
     transform: scale(0.25, 0.25) translate(-150%, -150%);
 }
+
+.audio-node {
+    width: 200px;
+    height: 200px;
+    border: 1px solid;
+    border-radius: 10px;
+    background-color: lightblue;
+    /* position: absolute; */
+}
