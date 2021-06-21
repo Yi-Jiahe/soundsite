@@ -1,3 +1,5 @@
+import Plotly from 'plotly.js-dist';
+
 var audioContext;
 var audioSourceNode;
 var analyserNode;
@@ -5,12 +7,17 @@ var analyserNode;
 const fft_samples = 2048;
 
 const fft_plot = document.getElementById("fft");
-const frequency_bins = 
+const frequency_bins = new Array(fft_samples/2);
+for (var i=0; i < frequency_bins.length; i++) {
+    frequency_bins[i] = 48000/(frequency_bins.length) * i;
+}
+// console.log(frequency_bins);
 Plotly.newPlot(fft_plot, 
     [{
-
-    }],
-    layout);
+        x: frequency_bins,
+        y: new Float32Array(frequency_bins.length),
+        type: 'bar'
+    }]);
 
 const waveform_plot = document.getElementById("waveform"); 
 
@@ -20,6 +27,7 @@ window.onload = function() {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
 
     audioContext = new AudioContext();
+    // console.log(audioContext.sampleRate);
 }
 
 // Gets the microphone
@@ -38,6 +46,8 @@ function getLocalStream() {
 
         // Connect the audio source to the destination for playback
         audioSourceNode.connect(audioContext.destination);
+
+        setInterval(analyse, 500);
     }).catch( err => {
         console.log("You got an error:" + err);
     });
@@ -48,8 +58,15 @@ function analyse() {
     analyserNode.getFloatFrequencyData(fft);
     const waveform = new Float32Array(analyserNode.fftSize)
     analyserNode.getFloatTimeDomainData(waveform);
-    console.log(fft);
-    console.log(waveform);
+    // console.log(fft);
+    Plotly.animate(fft_plot,
+        { 
+            data: [{
+                y: fft,
+            }]
+        }
+    );
+    // console.log(waveform);
 }
 
 window.addEventListener('focus', getLocalStream);
