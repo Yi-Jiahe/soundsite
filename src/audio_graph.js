@@ -10,7 +10,10 @@ class AudioNodeComponent extends React.Component {
     render() {
         return e(
             'div',
-            {className: "audio-node"},
+            {
+              className: "audio-node",
+              onClick: this.props.onClick
+            },
             this.props.name
         );
     }
@@ -25,7 +28,14 @@ class AudioGraph extends React.Component {
     return e(
         'div', 
         null,
-        this.props.nodes.map((n) => e(AudioNodeComponent, {key: n.key, name: n.name}))
+        this.props.audioManager.intermediateNodes.map((n, i) => e(AudioNodeComponent, {
+          key: i, 
+          name: n.constructor.name, 
+          onClick: () => {
+            console.log(`${n.constructor.name} clicked`);
+            this.props.audioManager.removeNode(i);
+          }
+        }))
     );
   }
 }

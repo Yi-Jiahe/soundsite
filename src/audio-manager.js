@@ -38,6 +38,21 @@ class AudioManager {
 
         this.intermediateNodes.splice(index, 0, node);
     }
+
+    removeNode(index) {
+        if (index > this.intermediateNodes.length) {
+            throw 'index is invalid';
+        }
+        const node = this.intermediateNodes[index];
+        const parentNode = index == 0 ? this.sourceAnalyserNode : this.intermediateNodes[index-1];
+        const childNode = index == this.intermediateNodes.length-1 ? this.outputAnalyserNode : this.intermediateNodes[index+1];
+
+        node.disconnect(childNode);
+        parentNode.disconnect(node);
+        parentNode.connect(childNode);
+
+        this.intermediateNodes.splice(index, 1);
+    }
 }
 
 export { AudioManager };

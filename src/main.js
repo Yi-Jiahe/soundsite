@@ -68,12 +68,7 @@ function init() {
         
         const domContainer = document.querySelector('#audio_graph');
         ReactDOM.render(React.createElement(AudioGraph, 
-            {nodes: audioManager.intermediateNodes.map((n, i) => {
-                const node = {};
-                node['key'] = i;
-                node['name'] = n.constructor.name;
-                return node;
-            })}), domContainer);
+            { audioManager: audioManager }), domContainer);
 
         window.requestAnimationFrame(draw);
     }).catch(err => {
